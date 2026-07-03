@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Silly Future Machine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Baloo+2:wght@500;700;800&display=swap');
+
+  :root{
+    --blue:#cfe6fb;
+    --blue-dark:#3e8ed0;
+    --ink:#1d1d1d;
+    --paper:#fffdf7;
+    --pink:#ffd1dc;
+    --yellow:#ffe27a;
+    --green:#bdeecb;
+    --line:#1d1d1d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      linear-gradient(#eef5fb 1px, transparent 1px),
+      linear-gradient(90deg, #eef5fb 1px, transparent 1px),
+      #f7fbff;
+    background-size:24px 24px;
+    font-family:'Patrick Hand', cursive;
+    color:var(--ink);
+    padding:20px;
+  }
+  h1{
+    font-family:'Baloo 2', cursive;
+    text-align:center;
+    font-size:42px;
+    margin:0 0 4px;
+    letter-spacing:1px;
+  }
+  .sub{
+    text-align:center;
+    font-size:20px;
+    margin-bottom:18px;
+    color:#444;
+  }
+  .clockicon{font-size:28px;}
+
+  .machine{
+    max-width:980px;
+    margin:0 auto;
+    border:4px solid var(--line);
+    border-radius:18px;
+    background:var(--paper);
+    box-shadow:6px 6px 0 var(--line);
+    padding:18px;
+  }
+
+  .sentence-box{
+    background:var(--blue);
+    border:3px solid var(--line);
+    border-radius:14px;
+    min-height:90px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:14px 18px;
+    font-family:'Baloo 2', cursive;
+    font-size:30px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .sentence-box .slot{
+    min-width:70px;
+    text-align:center;
+    border-bottom:3px dotted #888;
+    padding:0 6px;
+  }
+  .sentence-box .filled{
+    border-bottom:3px solid var(--blue-dark);
+  }
+  .emoji-display{
+    font-size:42px;
+    margin-left:8px;
+  }
+
+  .controls{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  button.action{
+    font-family:'Baloo 2', cursive;
+    font-size:18px;
+    font-weight:700;
+    border:3px solid var(--line);
+    border-radius:10px;
+    padding:10px 18px;
+    background:var(--yellow);
+    cursor:pointer;
+    box-shadow:3px 3px 0 var(--line);
+    transition:transform .08s;
+  }
+  button.action:active{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--line);}
+  button.action.speak{background:var(--pink);}
+  button.action.shuffle{background:var(--green);}
+  button.action.reset{background:#eee;}
+
+  .columns{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+  }
+  .col h2{
+    font-family:'Baloo 2', cursive;
+    text-align:center;
+    background:var(--blue);
+    border:3px solid var(--line);
+    border-radius:8px;
+    padding:6px;
+    font-size:18px;
+    margin:0 0 10px;
+  }
+  .cards{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:380px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .card{
+    border:3px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+    padding:8px 10px;
+    font-size:22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    box-shadow:2px 2px 0 var(--line);
+    transition:transform .08s;
+  }
+  .card:hover{transform:translateY(-2px);}
+  .card.selected{
+    background:var(--yellow);
+  }
+  .card .em{font-size:26px;}
+
+  .endingcard{
+    text-align:center;
+    font-family:'Baloo 2', cursive;
+    font-weight:800;
+    font-size:30px;
+    border:3px solid var(--line);
+    border-radius:10px;
+    background:var(--pink);
+    padding:14px;
+    box-shadow:2px 2px 0 var(--line);
+  }
+
+  .write-area{
+    margin-top:20px;
+    border-top:3px dashed #aaa;
+    padding-top:16px;
+  }
+  .write-area h2{
+    font-family:'Baloo 2', cursive;
+    font-size:20px;
+    margin:0 0 8px;
+  }
+  textarea{
+    width:100%;
+    font-family:'Patrick Hand', cursive;
+    font-size:22px;
+    border:3px solid var(--line);
+    border-radius:10px;
+    padding:10px;
+    min-height:60px;
+    resize:vertical;
+  }
+  .check-row{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .feedback{
+    font-size:20px;
+    font-family:'Baloo 2', cursive;
+  }
+  .feedback.good{color:#2e7d32;}
+  .feedback.bad{color:#c62828;}
+
+  .footer-note{
+    text-align:center;
+    font-size:16px;
+    color:#666;
+    margin-top:16px;
+  }
+
+  @media (max-width:720px){
+    .columns{grid-template-columns:1fr;}
+    .sentence-box{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<h1><span class="clockicon">🕒</span> The Silly Future Machine</h1>
+<div class="sub">Pick a card from each column to build a silly sentence — then say it out loud!</div>
+
+<div class="machine">
+
+  <div class="sentence-box" id="sentenceBox">
+    <span class="slot" id="slotSubject">subject</span>
+    <span class="slot filled">will be</span>
+    <span class="slot" id="slotVerb">verb</span>
+    <span class="emoji-display" id="slotEmoji"></span>
+  </div>
+
+  <div class="controls">
+    <button class="action speak" onclick="speakSentence()">🔊 Say it out loud</button>
+    <button class="action shuffle" onclick="randomSilly()">🎲 Surprise me (silly mode)</button>
+    <button class="action reset" onclick="resetGame()">↺ Reset</button>
+  </div>
+
+  <div class="columns">
+    <div class="col">
+      <h2>SUBJECT PRONOUNS</h2>
+      <div class="cards" id="subjectCards"></div>
+    </div>
+    <div class="col">
+      <h2>VERB</h2>
+      <div class="cards" id="verbCards"></div>
+    </div>
+    <div class="col">
+      <h2>ENDING</h2>
+      <div class="endingcard">+ ing</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">Future continuous: subject + will be + verb-ing. Build it, say it, then write it!</div>
+
+<script>
+const subjects = [
+  {text:"I", verb_be:"will be"},
+  {text:"You", verb_be:"will be"},
+  {text:"He", verb_be:"will be"},
+  {text:"She", verb_be:"will be"},
+  {text:"We", verb_be:"will be"},
+  {text:"They", verb_be:"will be"},
+  {text:"My dog", verb_be:"will be"},
+  {text:"The teacher", verb_be:"will be"},
+  {text:"A monkey", verb_be:"will be"},
+  {text:"My grandma", verb_be:"will be"}
+];
+
+const verbs = [
+  {base:"work", ing:"working", em:"💻"},
+  {base:"walk", ing:"walking", em:"🚶"},
+  {base:"talk", ing:"talking", em:"🗣️"},
+  {base:"cry", ing:"crying", em:"😢"},
+  {base:"wash", ing:"washing", em:"🧼"},
+  {base:"cook", ing:"cooking", em:"🍳"},
+  {base:"dance", ing:"dancing", em:"💃"},
+  {base:"sing", ing:"singing", em:"🎤"},
+  {base:"swim", ing:"swimming", em:"🏊"},
+  {base:"jump", ing:"jumping", em:"🤸"},
+  {base:"fly", ing:"flying", em:"🛩️"},
+  {base:"sleep", ing:"sleeping", em:"😴"},
+  {base:"eat pizza", ing:"eating pizza", em:"🍕"},
+  {base:"ride a bike", ing:"riding a bike", em:"🚲"},
+  {base:"paint", ing:"painting", em:"🎨"}
+];
+
+let selectedSubject = null;
+let selectedVerb = null;
+
+function buildColumns(){
+  const subWrap = document.getElementById('subjectCards');
+  subWrap.innerHTML = '';
+  subjects.forEach((s,i)=>{
+    const d = document.createElement('div');
+    d.className = 'card';
+    d.id = 'sub-'+i;
+    d.innerHTML = `<span>${s.text}</span>`;
+    d.onclick = ()=>selectSubject(i);
+    subWrap.appendChild(d);
+  });
+
+  const verbWrap = document.getElementById('verbCards');
+  verbWrap.innerHTML = '';
+  verbs.forEach((v,i)=>{
+    const d = document.createElement('div');
+    d.className = 'card';
+    d.id = 'verb-'+i;
+    d.innerHTML = `<span>${v.base}</span><span class="em">${v.em}</span>`;
+    d.onclick = ()=>selectVerb(i);
+    verbWrap.appendChild(d);
+  });
+}
+
+function clearSelected(prefix, list){
+  list.forEach((_,i)=>{
+    const el = document.getElementById(prefix+'-'+i);
+    if(el) el.classList.remove('selected');
+  });
+}
+
+function selectSubject(i){
+  selectedSubject = i;
+  clearSelected('sub', subjects);
+  document.getElementById('sub-'+i).classList.add('selected');
+  updateSentence();
+}
+
+function selectVerb(i){
+  selectedVerb = i;
+  clearSelected('verb', verbs);
+  document.getElementById('verb-'+i).classList.add('selected');
+  updateSentence();
+}
+
+function updateSentence(){
+  const subEl = document.getElementById('slotSubject');
+  const verbEl = document.getElementById('slotVerb');
+  const emojiEl = document.getElementById('slotEmoji');
+
+  if(selectedSubject !== null){
+    subEl.textContent = subjects[selectedSubject].text;
+    subEl.classList.add('filled');
+  } else {
+    subEl.textContent = 'subject';
+    subEl.classList.remove('filled');
+  }
+
+  if(selectedVerb !== null){
+    verbEl.textContent = verbs[selectedVerb].ing;
+    verbEl.classList.add('filled');
+    emojiEl.textContent = verbs[selectedVerb].em;
+  } else {
+    verbEl.textContent = 'verb';
+    verbEl.classList.remove('filled');
+    emojiEl.textContent = '';
+  }
+}
+
+function currentSentence(){
+  if(selectedSubject === null || selectedVerb === null) return null;
+  return `${subjects[selectedSubject].text} will be ${verbs[selectedVerb].ing}`;
+}
+
+let cachedVoices = [];
+function loadVoices(){
+  cachedVoices = speechSynthesis.getVoices();
+}
+loadVoices();
+if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined){
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickNaturalVoice(){
+  if(!cachedVoices || cachedVoices.length === 0) cachedVoices = speechSynthesis.getVoices();
+  const preferredNames = [
+    "Google US English", "Google UK English Female", "Google UK English Male",
+    "Samantha", "Daniel", "Karen", "Moira", "Alex",
+    "Microsoft Aria Online (Natural)", "Microsoft Jenny Online (Natural)",
+    "Microsoft Guy Online (Natural)", "Microsoft Libby Online (Natural)"
+  ];
+  for(const name of preferredNames){
+    const v = cachedVoices.find(v => v.name === name);
+    if(v) return v;
+  }
+  const natural = cachedVoices.find(v => /Natural|Online/i.test(v.name) && v.lang.startsWith('en'));
+  if(natural) return natural;
+  const enLocal = cachedVoices.find(v => v.lang === 'en-US' && v.localService);
+  if(enLocal) return enLocal;
+  const enAny = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
+  if(enAny) return enAny;
+  return cachedVoices[0] || null;
+}
+
+function speakSentence(){
+  const s = currentSentence();
+  if(!s){
+    alert("Pick a subject and a verb first!");
+    return;
+  }
+  const utter = new SpeechSynthesisUtterance(s + ".");
+  const voice = pickNaturalVoice();
+  if(voice) utter.voice = voice;
+  utter.rate = 1;
+  utter.pitch = 1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+function randomSilly(){
+  const si = Math.floor(Math.random()*subjects.length);
+  const vi = Math.floor(Math.random()*verbs.length);
+  selectSubject(si);
+  selectVerb(vi);
+  document.getElementById('sub-'+si).scrollIntoView({block:'nearest'});
+  document.getElementById('verb-'+vi).scrollIntoView({block:'nearest'});
+  setTimeout(speakSentence, 300);
+}
+
+function resetGame(){
+  selectedSubject = null;
+  selectedVerb = null;
+  clearSelected('sub', subjects);
+  clearSelected('verb', verbs);
+  updateSentence();
+}
+
+buildColumns();
+</script>
+
+</body>
+</html>
